@@ -1,1 +1,26 @@
-
+---
+- name: Swarm mode configuration and installation of Docker.
+  hosts: all
+  vars:
+    swarm_manager: 192.1276.20.100
+  tasks:
+    - name: Docker Installation
+      yum:
+        name: docker
+        state: latest
+    - name: Docker service initiation and Enabling.
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Swarm mode Initiation
+      shell: docker swarm init --advertise-addr {{ ansible_eth0.ipv4.address }}
+      args:
+        executable: /bin/bash
+      when: ansible_eth0.ipv4.address == swarm_manager
+    - name: Swarm mode enter
+      shell: docker swarm join --token {{ hostvars[swarm_manager]['swarm_join_token']
+        }} {{ swarm_manager }}:2377
+      args:
+        executable: /bin/bash
+      when: ansible_eth0.ipv4.address != swarm_manager
